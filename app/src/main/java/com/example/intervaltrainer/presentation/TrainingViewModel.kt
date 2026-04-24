@@ -27,11 +27,13 @@ data class TrainingUiState(
 )
 
 class TrainingViewModel(
-    application: Application,
-    private val generateQuestionUseCase: GenerateQuestionUseCase = GenerateQuestionUseCase(),
-    private val checkAnswerUseCase: CheckAnswerUseCase = CheckAnswerUseCase(),
-    private val audioPlayer: IntervalAudioPlayer = IntervalAudioPlayerProvider.create(application)
+    application: Application
 ) : AndroidViewModel(application) {
+
+    private val generateQuestionUseCase = GenerateQuestionUseCase()
+    private val checkAnswerUseCase = CheckAnswerUseCase()
+    private val audioPlayer: IntervalAudioPlayer =
+        IntervalAudioPlayerProvider.create(application)
 
     private val _uiState = MutableStateFlow(TrainingUiState())
     val uiState: StateFlow<TrainingUiState> = _uiState.asStateFlow()
