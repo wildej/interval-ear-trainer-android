@@ -10,7 +10,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -74,37 +77,50 @@ private fun AppNavHost(navController: NavHostController, vm: TrainingViewModel) 
 @Composable
 private fun SessionSetupScreen(vm: TrainingViewModel, onStart: () -> Unit) {
     val state by vm.uiState.collectAsState()
-    Scaffold { padding ->
+    Scaffold(
+        containerColor = MaterialTheme.colorScheme.background
+    ) { padding ->
         Column(
             modifier = Modifier
                 .padding(padding)
-                .padding(16.dp)
+                .padding(20.dp)
                 .fillMaxSize()
         ) {
-            Text("Выберите интервалы", style = MaterialTheme.typography.headlineSmall)
-            Spacer(Modifier.height(12.dp))
-            LazyColumn(modifier = Modifier.weight(1f)) {
-                items(Interval.entries) { interval ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 2.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Checkbox(
-                            checked = state.selectedIntervals.contains(interval),
-                            onCheckedChange = { vm.toggleInterval(interval) }
-                        )
-                        Text("${interval.shortName} - ${interval.displayName}")
+            Text("Intervalo", style = MaterialTheme.typography.headlineMedium)
+            Text("Выберите интервалы для тренировки", style = MaterialTheme.typography.bodyMedium)
+            Spacer(Modifier.height(16.dp))
+            Card(
+                modifier = Modifier.weight(1f),
+                shape = MaterialTheme.shapes.large,
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            ) {
+                LazyColumn(modifier = Modifier.padding(12.dp)) {
+                    items(Interval.entries) { interval ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 2.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Checkbox(
+                                checked = state.selectedIntervals.contains(interval),
+                                onCheckedChange = { vm.toggleInterval(interval) }
+                            )
+                            Text("${interval.shortName} - ${interval.displayName}")
+                        }
                     }
                 }
             }
+            Spacer(Modifier.height(14.dp))
             Button(
                 onClick = onStart,
                 enabled = state.selectedIntervals.isNotEmpty(),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .semantics { contentDescription = "start_training_button" }
+                    .semantics { contentDescription = "start_training_button" },
+                shape = MaterialTheme.shapes.large,
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
             ) {
                 Text("Начать тренировку")
             }
@@ -116,33 +132,55 @@ private fun SessionSetupScreen(vm: TrainingViewModel, onStart: () -> Unit) {
 private fun TrainingScreen(vm: TrainingViewModel, onOpenSummary: () -> Unit) {
     val state by vm.uiState.collectAsState()
     val question = state.currentQuestion
-    Scaffold { padding ->
+    Scaffold(
+        containerColor = MaterialTheme.colorScheme.background
+    ) { padding ->
         Column(
             modifier = Modifier
                 .padding(padding)
-                .padding(16.dp)
+                .padding(20.dp)
                 .fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Text("Тренировка", style = MaterialTheme.typography.headlineSmall)
-            Text("Верных: ${state.stats.correct}/${state.stats.total}")
+            Text("Тренировка", style = MaterialTheme.typography.headlineMedium)
+            Card(
+                shape = MaterialTheme.shapes.medium,
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            ) {
+                Text(
+                    "Верных: ${state.stats.correct}/${state.stats.total}",
+                    modifier = Modifier.padding(12.dp),
+                    style = MaterialTheme.typography.titleMedium
+                )
+            }
             Button(
                 onClick = { vm.playCurrentQuestion() },
                 enabled = question != null && !state.isPlaying,
-                modifier = Modifier.semantics { contentDescription = "listen_again_button" }
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .semantics { contentDescription = "listen_again_button" },
+                shape = MaterialTheme.shapes.large,
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
             ) {
                 Text(if (state.isPlaying) "Воспроизведение..." else "Слушать / Еще раз")
             }
             Text("Выберите интервал:")
-            LazyColumn(modifier = Modifier.weight(1f)) {
-                items(question?.options.orEmpty()) { option ->
-                    Button(
-                        onClick = { vm.selectAnswer(option) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 2.dp)
-                    ) {
-                        Text("${option.shortName} - ${option.displayName}")
+            Card(
+                modifier = Modifier.weight(1f),
+                shape = MaterialTheme.shapes.large,
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            ) {
+                LazyColumn(modifier = Modifier.padding(12.dp)) {
+                    items(question?.options.orEmpty()) { option ->
+                        Button(
+                            onClick = { vm.selectAnswer(option) },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 3.dp),
+                            shape = MaterialTheme.shapes.medium
+                        ) {
+                            Text("${option.shortName} - ${option.displayName}")
+                        }
                     }
                 }
             }
@@ -150,21 +188,39 @@ private fun TrainingScreen(vm: TrainingViewModel, onOpenSummary: () -> Unit) {
                 Button(
                     onClick = { vm.checkAnswer() },
                     enabled = state.selectedAnswer != null && !state.isAnswerChecked,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
+                    shape = MaterialTheme.shapes.medium
                 ) { Text("Проверить") }
                 Button(
                     onClick = { vm.nextQuestion() },
                     enabled = state.isAnswerChecked,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
+                    shape = MaterialTheme.shapes.medium
                 ) { Text("Следующий") }
             }
             if (state.isAnswerChecked && question != null) {
                 val feedback = if (state.isAnswerCorrect) "Верно" else "Неверно"
-                Text("$feedback. Правильный: ${question.interval.shortName}")
+                Card(
+                    shape = MaterialTheme.shapes.medium,
+                    colors = CardDefaults.cardColors(
+                        containerColor = if (state.isAnswerCorrect) {
+                            MaterialTheme.colorScheme.secondary.copy(alpha = 0.18f)
+                        } else {
+                            MaterialTheme.colorScheme.primary.copy(alpha = 0.16f)
+                        }
+                    )
+                ) {
+                    Text(
+                        "$feedback. Правильный: ${question.interval.shortName}",
+                        modifier = Modifier.padding(12.dp),
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                }
             }
             Button(
                 onClick = onOpenSummary,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                shape = MaterialTheme.shapes.large
             ) { Text("Завершить сессию") }
         }
     }
@@ -173,22 +229,31 @@ private fun TrainingScreen(vm: TrainingViewModel, onOpenSummary: () -> Unit) {
 @Composable
 private fun SessionSummaryScreen(vm: TrainingViewModel, onRestart: () -> Unit, onRetake: () -> Unit) {
     val state by vm.uiState.collectAsState()
-    Scaffold { padding ->
+    Scaffold(
+        containerColor = MaterialTheme.colorScheme.background
+    ) { padding ->
         Column(
             modifier = Modifier
                 .padding(padding)
-                .padding(16.dp)
+                .padding(20.dp)
                 .fillMaxSize(),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Text("Результаты", style = MaterialTheme.typography.headlineSmall)
-            Text("Верных ответов: ${state.stats.correct}")
-            Text("Всего ответов: ${state.stats.total}")
-            Text("Точность: ${state.stats.accuracyPercent}%")
-            Button(onClick = onRetake, modifier = Modifier.fillMaxWidth()) {
+            Text("Результаты", style = MaterialTheme.typography.headlineMedium)
+            Card(
+                shape = MaterialTheme.shapes.large,
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            ) {
+                Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text("Верных ответов: ${state.stats.correct}")
+                    Text("Всего ответов: ${state.stats.total}")
+                    Text("Точность: ${state.stats.accuracyPercent}%", style = MaterialTheme.typography.titleLarge)
+                }
+            }
+            Button(onClick = onRetake, modifier = Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large) {
                 Text("Новая сессия")
             }
-            Button(onClick = onRestart, modifier = Modifier.fillMaxWidth()) {
+            Button(onClick = onRestart, modifier = Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large) {
                 Text("Изменить набор")
             }
         }

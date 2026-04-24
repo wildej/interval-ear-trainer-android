@@ -20,11 +20,12 @@ class SineWaveIntervalAudioPlayer(
 ) : IntervalAudioPlayer {
     private val sampleRate = 44_100
     private val toneDurationMs = 800
+    private val chordToArpeggioPauseMs = 320L
     private val arpeggioPauseMs = 150L
 
     override suspend fun playInterval(root: Note, top: Note) = withContext(dispatcher) {
         playChord(root.frequencyHz, top.frequencyHz)
-        delay(60)
+        delay(chordToArpeggioPauseMs)
         playTone(root.frequencyHz)
         delay(arpeggioPauseMs)
         playTone(top.frequencyHz)
