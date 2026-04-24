@@ -9,7 +9,6 @@ import kotlinx.coroutines.withContext
 import java.util.Locale
 import kotlin.LazyThreadSafetyMode
 import kotlin.math.abs
-import kotlin.math.floorMod
 
 /**
  * One-shot piano samples from assets/[assetDir] (WAV, 16-bit). Each file is mapped to the nearest
@@ -101,10 +100,12 @@ private fun letterAccOctaveToMidi(letter: Char, acc: Char?, octave: Int): Int {
         'b' -> 11
         else -> return 60
     }
-    val pc = (basePc + when (acc) {
+    val accOffset: Int = when (acc) {
         '#' -> 1
         'b' -> -1
         else -> 0
-    }).floorMod(12)
+    }
+    val rawPc = basePc + accOffset
+    val pc = ((rawPc % 12) + 12) % 12
     return 12 * (octave + 1) + pc
 }
