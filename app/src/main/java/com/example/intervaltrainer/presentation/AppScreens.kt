@@ -184,22 +184,16 @@ private fun TrainingScreen(vm: TrainingViewModel, onOpenSummary: () -> Unit) {
                     }
                 }
             }
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(
-                    onClick = { vm.checkAnswer() },
-                    enabled = state.selectedAnswer != null && !state.isAnswerChecked,
-                    modifier = Modifier.weight(1f),
-                    shape = MaterialTheme.shapes.medium
-                ) { Text("Проверить") }
-                Button(
-                    onClick = { vm.nextQuestion() },
-                    enabled = state.isAnswerChecked,
-                    modifier = Modifier.weight(1f),
-                    shape = MaterialTheme.shapes.medium
-                ) { Text("Следующий") }
-            }
+            Button(
+                onClick = { vm.nextQuestion() },
+                enabled = state.isAnswerChecked,
+                modifier = Modifier.fillMaxWidth(),
+                shape = MaterialTheme.shapes.medium
+            ) { Text("Дальше") }
             if (state.isAnswerChecked && question != null) {
                 val feedback = if (state.isAnswerCorrect) "Верно" else "Неверно"
+                val correctLabel =
+                    "${question.interval.displayName} (${question.interval.shortName})"
                 Card(
                     shape = MaterialTheme.shapes.medium,
                     colors = CardDefaults.cardColors(
@@ -211,7 +205,7 @@ private fun TrainingScreen(vm: TrainingViewModel, onOpenSummary: () -> Unit) {
                     )
                 ) {
                     Text(
-                        "$feedback. Правильный: ${question.interval.shortName}",
+                        "$feedback. Правильный ответ: $correctLabel",
                         modifier = Modifier.padding(12.dp),
                         style = MaterialTheme.typography.titleMedium
                     )
@@ -221,7 +215,7 @@ private fun TrainingScreen(vm: TrainingViewModel, onOpenSummary: () -> Unit) {
                 onClick = onOpenSummary,
                 modifier = Modifier.fillMaxWidth(),
                 shape = MaterialTheme.shapes.large
-            ) { Text("Завершить сессию") }
+            ) { Text("Завершить тренировку") }
         }
     }
 }
@@ -251,7 +245,7 @@ private fun SessionSummaryScreen(vm: TrainingViewModel, onRestart: () -> Unit, o
                 }
             }
             Button(onClick = onRetake, modifier = Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large) {
-                Text("Новая сессия")
+                Text("Новая тренировка")
             }
             Button(onClick = onRestart, modifier = Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large) {
                 Text("Изменить набор")

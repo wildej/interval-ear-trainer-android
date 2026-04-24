@@ -62,16 +62,13 @@ class TrainingViewModel(
     }
 
     fun selectAnswer(interval: Interval) {
-        _uiState.update { it.copy(selectedAnswer = interval) }
-    }
-
-    fun checkAnswer() {
         val state = _uiState.value
+        if (state.isAnswerChecked) return
         val question = state.currentQuestion ?: return
-        val selected = state.selectedAnswer ?: return
-        val correct = checkAnswerUseCase.isCorrect(question, selected)
+        val correct = checkAnswerUseCase.isCorrect(question, interval)
         _uiState.update {
             it.copy(
+                selectedAnswer = interval,
                 isAnswerChecked = true,
                 isAnswerCorrect = correct,
                 stats = it.stats.copy(

@@ -10,16 +10,19 @@
 
 ### Audio
 
-1. **Sample-based playback (done — multisample pack)**  
-   - Teddy_Frost Freesound pack (CC0) in `app/src/main/assets/audio/piano_teddy/` + `LICENSE_README.txt`.  
-   - `MultiSampleIntervalAudioPlayer`: nearest sample + small pitch correction; fallback chain in `IntervalAudioPlayerProvider` (Teddy → `piano_ref` → sine).  
-   - **Next (P2):** extend coverage (more octaves / chromatic set) for fewer pitch-shifts at range extremes; optional SoundFont.
+- **Сделано:** мультисемплы Teddy_Frost в `assets/audio/piano_teddy/`, цепочка fallback в `IntervalAudioPlayerProvider`.
+- **Ожидает внешнего артефакта:** более полная библиотека нот / SoundFont — подключить, когда будет готов пак (заменить или дополнить текущую папку и при необходимости загрузчик).
 
-2. **Playback timing (done — config + overlap)**  
-   - `IntervalPlaybackTiming`: `arpeggioGapMs` — positive silence, **negative overlap** between arpeggio notes (see `ArpeggioMixer`).  
-   - **Next:** tune defaults per device; optional in-app advanced settings later.
+### Playback timing
+
+- **Зафиксировано:** текущие значения в `IntervalPlaybackTiming` оставляем без дальнейшей настройки (smoke ок).
+
+### UX тренировки
+
+- **Сделано:** ответ фиксируется по нажатию на вариант интервала; отдельная кнопка «Проверить» не используется; переход к следующему заданию — «Дальше».
 
 ## Priority 3
-1. **поправить термины**
-   - слово "сессия" звучит слишком официально, лучше заменить его
-   - в сообщении об ошибке нужно писать и полное название интервала, не только сокращенное
+
+### Термины и формулировки
+
+- **Сделано:** «сессия» заменена на «тренировка» в пользовательских строках; в сообщении о результате показывается полное название интервала (и краткое в скобках).
