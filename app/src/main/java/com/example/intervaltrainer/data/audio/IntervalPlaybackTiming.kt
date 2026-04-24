@@ -5,7 +5,11 @@ package com.example.intervaltrainer.data.audio
  * Tweak here to iterate on feel without touching player logic.
  */
 data class IntervalPlaybackTiming(
-    val toneDurationMs: Int = 750,
-    val chordToArpeggioPauseMs: Long = 420L,
-    val arpeggioPauseMs: Long = 180L
+    val toneDurationMs: Int = 720,
+    val chordToArpeggioPauseMs: Long = 360L,
+    /**
+     * Gap between the two arpeggio notes (after the chord).
+     * Positive: silence between notes. Negative: overlap (second note starts before the first ends).
+     */
+    val arpeggioGapMs: Long = -110L
 )

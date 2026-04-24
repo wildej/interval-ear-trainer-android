@@ -35,9 +35,8 @@ class AssetSampleIntervalAudioPlayer(
         val chord = mix(a, b)
         playMono16Pcm(sampleRate, chord)
         delay(timing.chordToArpeggioPauseMs)
-        playMono16Pcm(sampleRate, a)
-        delay(timing.arpeggioPauseMs)
-        playMono16Pcm(sampleRate, b)
+        val arpeggio = ArpeggioMixer.mergeSequential(a, b, sampleRate, timing.arpeggioGapMs)
+        playMono16Pcm(sampleRate, arpeggio)
     }
 
     private fun mix(a: ShortArray, b: ShortArray): ShortArray {

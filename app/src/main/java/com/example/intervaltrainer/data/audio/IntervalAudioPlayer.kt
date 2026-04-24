@@ -21,18 +21,14 @@ class SineWaveIntervalAudioPlayer(
     override suspend fun playInterval(root: Note, top: Note) = withContext(dispatcher) {
         playChord(root.frequencyHz, top.frequencyHz)
         delay(timing.chordToArpeggioPauseMs)
-        playTone(root.frequencyHz)
-        delay(timing.arpeggioPauseMs)
-        playTone(top.frequencyHz)
+        val a = generatePcm(timing.toneDurationMs, root.frequencyHz, null)
+        val b = generatePcm(timing.toneDurationMs, top.frequencyHz, null)
+        val arpeggio = ArpeggioMixer.mergeSequential(a, b, sampleRate, timing.arpeggioGapMs)
+        playMono16Pcm(sampleRate, arpeggio)
     }
 
     private fun playChord(freqA: Double, freqB: Double) {
         val pcm = generatePcm(timing.toneDurationMs, freqA, freqB)
-        playMono16Pcm(sampleRate, pcm)
-    }
-
-    private fun playTone(freq: Double) {
-        val pcm = generatePcm(timing.toneDurationMs, freq, null)
         playMono16Pcm(sampleRate, pcm)
     }
 
