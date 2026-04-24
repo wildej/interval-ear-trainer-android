@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.intervaltrainer"
+    namespace = "com.muxaeji.intervalo"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.example.intervaltrainer"
+        applicationId = "com.muxaeji.intervalo"
         minSdk = 26
         targetSdk = 34
         versionCode = 1

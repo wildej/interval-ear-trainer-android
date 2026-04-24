@@ -11,8 +11,8 @@
 
 ## Priority 1
 
-- нужно поменять имя пакета, com.muxaeji.intervalo
-- нужно выбрать лицензию, под которой мы публикуемся
+- **Сделано:** `applicationId` / `namespace` — `com.muxaeji.intervalo`, исходники в `com.muxaeji.intervalo.*`.
+- **Сделано:** публикация кода под **MIT** — [`LICENSE`](LICENSE); сторонние компоненты — [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
 
 ## Priority 2
 
