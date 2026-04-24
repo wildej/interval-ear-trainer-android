@@ -1,9 +1,10 @@
 package com.example.intervaltrainer.presentation
 
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.intervaltrainer.data.audio.IntervalAudioPlayer
-import com.example.intervaltrainer.data.audio.SineWaveIntervalAudioPlayer
+import com.example.intervaltrainer.data.audio.IntervalAudioPlayerProvider
 import com.example.intervaltrainer.domain.CheckAnswerUseCase
 import com.example.intervaltrainer.domain.GenerateQuestionUseCase
 import com.example.intervaltrainer.domain.Interval
@@ -26,10 +27,11 @@ data class TrainingUiState(
 )
 
 class TrainingViewModel(
+    application: Application,
     private val generateQuestionUseCase: GenerateQuestionUseCase = GenerateQuestionUseCase(),
     private val checkAnswerUseCase: CheckAnswerUseCase = CheckAnswerUseCase(),
-    private val audioPlayer: IntervalAudioPlayer = SineWaveIntervalAudioPlayer()
-) : ViewModel() {
+    private val audioPlayer: IntervalAudioPlayer = IntervalAudioPlayerProvider.create(application)
+) : AndroidViewModel(application) {
 
     private val _uiState = MutableStateFlow(TrainingUiState())
     val uiState: StateFlow<TrainingUiState> = _uiState.asStateFlow()

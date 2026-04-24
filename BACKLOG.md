@@ -2,7 +2,13 @@
 
 ## Priority 2
 
-1. Replace synthetic sine generator with sample-based playback (piano multisamples) to make timbre more natural.
-2. Tune interval playback timing further:
-   - increase expressive pause between chord playback and arpeggiated playback;
-   - test timings on multiple devices and expose timing constants for easier iteration.
+### Audio
+
+1. **Sample-based playback (done — MVP)**  
+   - Bundled reference WAV: `app/src/main/assets/audio/piano_ref.wav`  
+   - Runtime pitch via resampling (`AssetSampleIntervalAudioPlayer`); fallback to sine if asset missing.  
+   - **Next (still P2):** proper piano multisamples (e.g. one sample per octave or per note) and/or SoundFont to reduce resampling artifacts far from the reference pitch.
+
+2. **Playback timing (done — config)**  
+   - Centralized in `IntervalPlaybackTiming` (tone length, pause chord→arpeggio, pause between arpeggio notes).  
+   - **Next:** tune values after testing on more devices; optional in-app advanced settings later.

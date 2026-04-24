@@ -1,8 +1,5 @@
 package com.example.intervaltrainer.data.audio
 
-import android.media.AudioAttributes
-import android.media.AudioFormat
-import android.media.AudioTrack
 import com.example.intervaltrainer.domain.Note
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -16,29 +13,27 @@ interface IntervalAudioPlayer {
 }
 
 class SineWaveIntervalAudioPlayer(
+    private val timing: IntervalPlaybackTiming = IntervalPlaybackTiming(),
     private val dispatcher: CoroutineDispatcher = Dispatchers.Default
 ) : IntervalAudioPlayer {
     private val sampleRate = 44_100
-    private val toneDurationMs = 800
-    private val chordToArpeggioPauseMs = 320L
-    private val arpeggioPauseMs = 150L
 
     override suspend fun playInterval(root: Note, top: Note) = withContext(dispatcher) {
         playChord(root.frequencyHz, top.frequencyHz)
-        delay(chordToArpeggioPauseMs)
+        delay(timing.chordToArpeggioPauseMs)
         playTone(root.frequencyHz)
-        delay(arpeggioPauseMs)
+        delay(timing.arpeggioPauseMs)
         playTone(top.frequencyHz)
     }
 
     private fun playChord(freqA: Double, freqB: Double) {
-        val pcm = generatePcm(toneDurationMs, freqA, freqB)
-        playPcm(pcm)
+        val pcm = generatePcm(timing.toneDurationMs, freqA, freqB)
+        playMono16Pcm(sampleRate, pcm)
     }
 
     private fun playTone(freq: Double) {
-        val pcm = generatePcm(toneDurationMs, freq, null)
-        playPcm(pcm)
+        val pcm = generatePcm(timing.toneDurationMs, freq, null)
+        playMono16Pcm(sampleRate, pcm)
     }
 
     private fun generatePcm(durationMs: Int, freqA: Double, freqB: Double?): ShortArray {
@@ -59,36 +54,5 @@ class SineWaveIntervalAudioPlayer(
             result[i] = (value * env * Short.MAX_VALUE * 0.25).toInt().toShort()
         }
         return result
-    }
-
-    private fun playPcm(pcm: ShortArray) {
-        val minSize = AudioTrack.getMinBufferSize(
-            sampleRate,
-            AudioFormat.CHANNEL_OUT_MONO,
-            AudioFormat.ENCODING_PCM_16BIT
-        )
-        val track = AudioTrack(
-            AudioAttributes.Builder()
-                .setUsage(AudioAttributes.USAGE_MEDIA)
-                .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-                .build(),
-            AudioFormat.Builder()
-                .setSampleRate(sampleRate)
-                .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
-                .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
-                .build(),
-            maxOf(minSize, pcm.size * 2),
-            AudioTrack.MODE_STATIC,
-            AudioTrack.WRITE_NON_BLOCKING
-        )
-        track.write(pcm, 0, pcm.size, AudioTrack.WRITE_BLOCKING)
-        track.play()
-        while (track.playState == AudioTrack.PLAYSTATE_PLAYING &&
-            track.playbackHeadPosition < pcm.size
-        ) {
-            Thread.sleep(10)
-        }
-        track.stop()
-        track.release()
     }
 }
