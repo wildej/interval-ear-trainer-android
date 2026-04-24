@@ -5,6 +5,17 @@ import android.app.Application
 object IntervalAudioPlayerProvider {
     fun create(application: Application): IntervalAudioPlayer {
         val timing = IntervalPlaybackTiming()
+        val choriumAsset = "soundfonts/Chorium.SF2"
+        val hasChorium = runCatching {
+            application.assets.open(choriumAsset).use { it.read() }
+        }.isSuccess
+        if (hasChorium) {
+            return SoundFontIntervalAudioPlayer(
+                application,
+                timing = timing,
+                assetPath = choriumAsset
+            )
+        }
         val teddyDir = "audio/piano_teddy"
         val hasTeddySamples = runCatching {
             application.assets.list(teddyDir)?.any { name ->
