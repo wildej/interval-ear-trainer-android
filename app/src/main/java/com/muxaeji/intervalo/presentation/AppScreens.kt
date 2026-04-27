@@ -17,6 +17,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -29,6 +30,8 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
@@ -122,28 +125,31 @@ private fun ModeSelectScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text("Intervalo", style = MaterialTheme.typography.headlineMedium)
-            Text("Выберите режим", style = MaterialTheme.typography.bodyMedium)
             Spacer(modifier = Modifier.height(8.dp))
+            Button(
+                onClick = onOpenGameMode,
+                modifier = Modifier.fillMaxWidth(),
+                shape = MaterialTheme.shapes.large,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF00D2B8),
+                    contentColor = Color(0xFF01211C)
+                )
+            ) {
+                Text("Играть", fontWeight = FontWeight.Bold)
+            }
             Button(
                 onClick = onOpenTraining,
                 modifier = Modifier.fillMaxWidth(),
                 shape = MaterialTheme.shapes.large
             ) {
-                Text("Тренировка")
+                Text("Тренироваться")
             }
-            Button(
+            Spacer(modifier = Modifier.weight(1f))
+            TextButton(
                 onClick = onOpenShowMode,
                 modifier = Modifier.fillMaxWidth(),
-                shape = MaterialTheme.shapes.large
             ) {
-                Text("Режим показа")
-            }
-            Button(
-                onClick = onOpenGameMode,
-                modifier = Modifier.fillMaxWidth(),
-                shape = MaterialTheme.shapes.large
-            ) {
-                Text("Игровой режим")
+                Text("прослушать")
             }
         }
     }
