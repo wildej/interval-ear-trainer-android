@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.animateContentSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -13,7 +12,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.lazy.animateItemPlacement
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Button
@@ -326,9 +324,7 @@ private fun GameModeScreen(vm: TrainingViewModel, onBack: () -> Unit) {
                                     enabled = !state.isPlaying,
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(vertical = 3.dp)
-                                        .animateItemPlacement(animationSpec = tween(durationMillis = 300))
-                                        .animateContentSize(animationSpec = tween(durationMillis = 300)),
+                                        .padding(vertical = 3.dp),
                                     shape = MaterialTheme.shapes.medium,
                                     colors = ButtonDefaults.buttonColors(
                                         containerColor = if (isSelected) MaterialTheme.colorScheme.tertiary
@@ -365,9 +361,7 @@ private fun GameModeScreen(vm: TrainingViewModel, onBack: () -> Unit) {
                                     enabled = state.gameSelectedLeft != null && !state.isPlaying && !isFinished,
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(vertical = 3.dp)
-                                        .animateItemPlacement(animationSpec = tween(durationMillis = 300))
-                                        .animateContentSize(animationSpec = tween(durationMillis = 300)),
+                                        .padding(vertical = 3.dp),
                                     shape = MaterialTheme.shapes.medium
                                 ) {
                                     Text("${option.shortName} - ${option.displayName}")
