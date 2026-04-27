@@ -162,7 +162,7 @@ private fun TrainingScreen(vm: TrainingViewModel, onOpenSummary: () -> Unit) {
                 shape = MaterialTheme.shapes.large,
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
             ) {
-                Text(if (state.isPlaying) "Воспроизведение..." else "Слушать / Еще раз")
+                Text(if (state.isPlaying) "Воспроизведение..." else "Проиграть еще раз")
             }
             Text("Выберите интервал:")
             Card(
