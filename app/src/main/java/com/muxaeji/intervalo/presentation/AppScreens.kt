@@ -36,6 +36,8 @@ import com.muxaeji.intervalo.domain.Interval
 private const val ROUTE_SETUP = "setup"
 private const val ROUTE_TRAINING = "training"
 private const val ROUTE_SUMMARY = "summary"
+private const val ROUTE_MODE_SELECT = "mode_select"
+private const val ROUTE_SHOW = "show"
 
 @Composable
 fun IntervalTrainerApp() {
@@ -46,7 +48,13 @@ fun IntervalTrainerApp() {
 
 @Composable
 private fun AppNavHost(navController: NavHostController, vm: TrainingViewModel) {
-    NavHost(navController = navController, startDestination = ROUTE_SETUP) {
+    NavHost(navController = navController, startDestination = ROUTE_MODE_SELECT) {
+        composable(ROUTE_MODE_SELECT) {
+            ModeSelectScreen(
+                onOpenTraining = { navController.navigate(ROUTE_SETUP) },
+                onOpenShowMode = { navController.navigate(ROUTE_SHOW) }
+            )
+        }
         composable(ROUTE_SETUP) {
             SessionSetupScreen(vm = vm, onStart = {
                 vm.startSession()
@@ -63,13 +71,52 @@ private fun AppNavHost(navController: NavHostController, vm: TrainingViewModel) 
             SessionSummaryScreen(
                 vm = vm,
                 onRestart = {
-                    navController.popBackStack(ROUTE_SETUP, inclusive = false)
+                    navController.popBackStack(ROUTE_MODE_SELECT, inclusive = false)
                 },
                 onRetake = {
                     vm.startSession()
                     navController.popBackStack(ROUTE_TRAINING, inclusive = false)
                 }
             )
+        }
+        composable(ROUTE_SHOW) {
+            ShowModeScreen(
+                vm = vm,
+                onBack = { navController.popBackStack() }
+            )
+        }
+    }
+}
+
+@Composable
+private fun ModeSelectScreen(onOpenTraining: () -> Unit, onOpenShowMode: () -> Unit) {
+    Scaffold(
+        containerColor = MaterialTheme.colorScheme.background
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .padding(padding)
+                .padding(20.dp)
+                .fillMaxSize(),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Text("Intervalo", style = MaterialTheme.typography.headlineMedium)
+            Text("Выберите режим", style = MaterialTheme.typography.bodyMedium)
+            Spacer(modifier = Modifier.height(8.dp))
+            Button(
+                onClick = onOpenTraining,
+                modifier = Modifier.fillMaxWidth(),
+                shape = MaterialTheme.shapes.large
+            ) {
+                Text("Тренировка")
+            }
+            Button(
+                onClick = onOpenShowMode,
+                modifier = Modifier.fillMaxWidth(),
+                shape = MaterialTheme.shapes.large
+            ) {
+                Text("Режим показа")
+            }
         }
     }
 }
@@ -135,6 +182,52 @@ private fun SessionSetupScreen(vm: TrainingViewModel, onStart: () -> Unit) {
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
             ) {
                 Text("Начать тренировку")
+            }
+        }
+    }
+}
+
+@Composable
+private fun ShowModeScreen(vm: TrainingViewModel, onBack: () -> Unit) {
+    val state by vm.uiState.collectAsState()
+    Scaffold(
+        containerColor = MaterialTheme.colorScheme.background
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .padding(padding)
+                .padding(20.dp)
+                .fillMaxSize(),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Text("Режим показа", style = MaterialTheme.typography.headlineMedium)
+            Text("Нажмите на интервал, чтобы прослушать", style = MaterialTheme.typography.bodyMedium)
+            Card(
+                modifier = Modifier.weight(1f),
+                shape = MaterialTheme.shapes.large,
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            ) {
+                LazyColumn(modifier = Modifier.padding(12.dp)) {
+                    items(Interval.entries) { interval ->
+                        Button(
+                            onClick = { vm.playIntervalPreview(interval) },
+                            enabled = !state.isPlaying,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 3.dp),
+                            shape = MaterialTheme.shapes.medium
+                        ) {
+                            Text("${interval.shortName} - ${interval.displayName}")
+                        }
+                    }
+                }
+            }
+            Button(
+                onClick = onBack,
+                modifier = Modifier.fillMaxWidth(),
+                shape = MaterialTheme.shapes.large
+            ) {
+                Text("Назад")
             }
         }
     }

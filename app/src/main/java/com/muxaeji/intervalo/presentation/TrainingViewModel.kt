@@ -8,6 +8,7 @@ import com.muxaeji.intervalo.data.audio.IntervalAudioPlayerProvider
 import com.muxaeji.intervalo.domain.CheckAnswerUseCase
 import com.muxaeji.intervalo.domain.GenerateQuestionUseCase
 import com.muxaeji.intervalo.domain.Interval
+import com.muxaeji.intervalo.domain.Note
 import com.muxaeji.intervalo.domain.Question
 import com.muxaeji.intervalo.domain.SessionStats
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -113,6 +114,19 @@ class TrainingViewModel(
             _uiState.update { it.copy(isPlaying = true) }
             runCatching {
                 audioPlayer.playInterval(question.root, question.top)
+            }
+            _uiState.update { it.copy(isPlaying = false) }
+        }
+    }
+
+    fun playIntervalPreview(interval: Interval) {
+        if (_uiState.value.isPlaying) return
+        val root = Note(60)
+        val top = Note(root.midi + interval.semitones)
+        viewModelScope.launch {
+            _uiState.update { it.copy(isPlaying = true) }
+            runCatching {
+                audioPlayer.playInterval(root, top)
             }
             _uiState.update { it.copy(isPlaying = false) }
         }
