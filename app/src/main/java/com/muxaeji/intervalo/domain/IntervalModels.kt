@@ -1,18 +1,19 @@
 package com.muxaeji.intervalo.domain
 
 enum class Interval(val semitones: Int, val shortName: String, val displayName: String) {
-    MINOR_SECOND(1, "m2", "Малая секунда"),
-    MAJOR_SECOND(2, "M2", "Большая секунда"),
-    MINOR_THIRD(3, "m3", "Малая терция"),
-    MAJOR_THIRD(4, "M3", "Большая терция"),
-    PERFECT_FOURTH(5, "P4", "Чистая кварта"),
-    TRITONE(6, "TT", "Тритон"),
-    PERFECT_FIFTH(7, "P5", "Чистая квинта"),
-    MINOR_SIXTH(8, "m6", "Малая секста"),
-    MAJOR_SIXTH(9, "M6", "Большая секста"),
-    MINOR_SEVENTH(10, "m7", "Малая септима"),
-    MAJOR_SEVENTH(11, "M7", "Большая септима"),
-    OCTAVE(12, "P8", "Октава")
+    PERFECT_UNISON(0, "ч.1", "Чистая прима (унисон)"),
+    MINOR_SECOND(1, "м.2", "Малая секунда"),
+    MAJOR_SECOND(2, "б.2", "Большая секунда"),
+    MINOR_THIRD(3, "м.3", "Малая терция"),
+    MAJOR_THIRD(4, "б.3", "Большая терция"),
+    PERFECT_FOURTH(5, "ч.4", "Чистая кварта"),
+    TRITONE(6, "ув.4/ум.5", "Тритон (увеличенная кварта или уменьшенная квинта)"),
+    PERFECT_FIFTH(7, "ч.5", "Чистая квинта"),
+    MINOR_SIXTH(8, "м.6", "Малая секста"),
+    MAJOR_SIXTH(9, "б.6", "Большая секста"),
+    MINOR_SEVENTH(10, "м.7", "Малая септима"),
+    MAJOR_SEVENTH(11, "б.7", "Большая септима"),
+    PERFECT_OCTAVE(12, "ч.8", "Чистая октава")
 }
 
 data class Note(val midi: Int) {
