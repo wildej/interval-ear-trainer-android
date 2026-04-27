@@ -61,6 +61,7 @@ private const val ROUTE_SUMMARY = "summary"
 private const val ROUTE_MODE_SELECT = "mode_select"
 private const val ROUTE_SHOW = "show"
 private const val ROUTE_GAME = "game"
+private const val ROUTE_GAME_HELP = "game_help"
 
 @Composable
 fun IntervalTrainerApp() {
@@ -120,8 +121,12 @@ private fun AppNavHost(navController: NavHostController, vm: TrainingViewModel) 
         composable(ROUTE_GAME) {
             GameModeScreen(
                 vm = vm,
+                onOpenHelp = { navController.navigate(ROUTE_GAME_HELP) },
                 onBack = { navController.popBackStack() }
             )
+        }
+        composable(ROUTE_GAME_HELP) {
+            GameHelpScreen(onBack = { navController.popBackStack() })
         }
     }
 }
@@ -336,7 +341,7 @@ private fun ShowModeScreen(vm: TrainingViewModel, onBack: () -> Unit) {
 }
 
 @Composable
-private fun GameModeScreen(vm: TrainingViewModel, onBack: () -> Unit) {
+private fun GameModeScreen(vm: TrainingViewModel, onOpenHelp: () -> Unit, onBack: () -> Unit) {
     val state by vm.uiState.collectAsState()
     val total = state.gameItems.size
     val completedCount = state.gameCompleted.size
@@ -371,11 +376,8 @@ private fun GameModeScreen(vm: TrainingViewModel, onBack: () -> Unit) {
                 },
                 style = MaterialTheme.typography.bodyMedium
             )
-            if (!isFinished && !isGameOver) {
-                Text(
-                    "Слушайте слева в любом порядке и выбирайте справа для последней нажатой кнопки",
-                    style = MaterialTheme.typography.bodyMedium
-                )
+            TextButton(onClick = onOpenHelp, modifier = Modifier.fillMaxWidth()) {
+                Text("Как играть")
             }
             Row(
                 modifier = Modifier.weight(1f),
@@ -479,6 +481,47 @@ private fun GameModeScreen(vm: TrainingViewModel, onBack: () -> Unit) {
                     shape = MaterialTheme.shapes.large
                 ) {
                     Text("Новая игра")
+                }
+            }
+            Button(
+                onClick = onBack,
+                modifier = Modifier.fillMaxWidth(),
+                shape = MaterialTheme.shapes.large
+            ) {
+                Text("Назад")
+            }
+        }
+    }
+}
+
+@Composable
+private fun GameHelpScreen(onBack: () -> Unit) {
+    Scaffold(
+        containerColor = MaterialTheme.colorScheme.background
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .padding(padding)
+                .padding(20.dp)
+                .fillMaxSize(),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Text("Как играть", style = MaterialTheme.typography.headlineMedium)
+            Card(
+                shape = MaterialTheme.shapes.large,
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            ) {
+                Column(
+                    modifier = Modifier.padding(14.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text("1. Слева нажимайте любой интервал, чтобы прослушать его.")
+                    Text("2. Можно слушать интервалы в любом порядке и сколько угодно раз.")
+                    Text("3. Ответ справа относится к последней нажатой кнопке слева.")
+                    Text("4. Если угадали, пара исчезает из обоих столбцов.")
+                    Text("5. Если ошиблись, теряете одну жизнь и пробуете снова.")
+                    Text("6. Когда жизни кончаются, игра завершается.")
+                    Text("7. Когда все пары угаданы, переходите в следующий раунд.")
                 }
             }
             Button(
