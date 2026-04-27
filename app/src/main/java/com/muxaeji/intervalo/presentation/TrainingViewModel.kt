@@ -18,6 +18,8 @@ import kotlinx.coroutines.launch
 
 data class TrainingUiState(
     val selectedIntervals: Set<Interval> = setOf(Interval.MINOR_SECOND, Interval.MAJOR_SECOND),
+    val useFixedBaseNote: Boolean = false,
+    val baseMidiNote: Int = 60,
     val currentQuestion: Question? = null,
     val selectedAnswer: Interval? = null,
     val isAnswerChecked: Boolean = false,
@@ -47,8 +49,20 @@ class TrainingViewModel(
         }
     }
 
+    fun toggleFixedBaseNote() {
+        _uiState.update { it.copy(useFixedBaseNote = !it.useFixedBaseNote) }
+    }
+
+    private fun generateQuestionFromSettings(): Question {
+        val state = _uiState.value
+        return generateQuestionUseCase.generate(
+            selectedIntervals = state.selectedIntervals.toList(),
+            fixedRootMidi = if (state.useFixedBaseNote) state.baseMidiNote else null
+        )
+    }
+
     fun startSession() {
-        val question = generateQuestionUseCase.generate(_uiState.value.selectedIntervals.toList())
+        val question = generateQuestionFromSettings()
         _uiState.update {
             it.copy(
                 currentQuestion = question,
@@ -80,7 +94,7 @@ class TrainingViewModel(
     }
 
     fun nextQuestion() {
-        val question = generateQuestionUseCase.generate(_uiState.value.selectedIntervals.toList())
+        val question = generateQuestionFromSettings()
         _uiState.update {
             it.copy(
                 currentQuestion = question,

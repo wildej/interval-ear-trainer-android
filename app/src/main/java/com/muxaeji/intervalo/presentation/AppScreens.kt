@@ -88,6 +88,18 @@ private fun SessionSetupScreen(vm: TrainingViewModel, onStart: () -> Unit) {
         ) {
             Text("Intervalo", style = MaterialTheme.typography.headlineMedium)
             Text("Выберите интервалы для тренировки", style = MaterialTheme.typography.bodyMedium)
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Checkbox(
+                    checked = state.useFixedBaseNote,
+                    onCheckedChange = { vm.toggleFixedBaseNote() }
+                )
+                Text("Фиксированная базовая нота: C4")
+            }
             Spacer(Modifier.height(16.dp))
             Card(
                 modifier = Modifier.weight(1f),

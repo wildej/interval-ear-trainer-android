@@ -1,6 +1,7 @@
 package com.muxaeji.intervalo.domain
 
 import kotlin.random.Random
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -33,5 +34,19 @@ class TrainingUseCasesTest {
         val useCase = CheckAnswerUseCase()
         assertTrue(useCase.isCorrect(question, Interval.MAJOR_THIRD))
         assertFalse(useCase.isCorrect(question, Interval.MINOR_THIRD))
+    }
+
+    @Test
+    fun generateQuestion_usesFixedRootWhenProvided() {
+        val useCase = GenerateQuestionUseCase(
+            random = Random(7),
+            minMidi = 48,
+            maxMidi = 72
+        )
+        repeat(20) {
+            val q = useCase.generate(Interval.entries, fixedRootMidi = 60)
+            assertEquals(60, q.root.midi)
+            assertEquals(60 + q.interval.semitones, q.top.midi)
+        }
     }
 }
