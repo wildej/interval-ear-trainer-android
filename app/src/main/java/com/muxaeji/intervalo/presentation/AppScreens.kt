@@ -31,6 +31,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -58,9 +59,11 @@ fun IntervalTrainerApp() {
 
 @Composable
 private fun AppNavHost(navController: NavHostController, vm: TrainingViewModel) {
+    val state by vm.uiState.collectAsState()
     NavHost(navController = navController, startDestination = ROUTE_MODE_SELECT) {
         composable(ROUTE_MODE_SELECT) {
             ModeSelectScreen(
+                gameBestRounds = state.gameBestRounds,
                 onOpenTraining = { navController.navigate(ROUTE_SETUP) },
                 onOpenShowMode = { navController.navigate(ROUTE_SHOW) },
                 onOpenGameMode = {
@@ -110,6 +113,7 @@ private fun AppNavHost(navController: NavHostController, vm: TrainingViewModel) 
 
 @Composable
 private fun ModeSelectScreen(
+    gameBestRounds: Int,
     onOpenTraining: () -> Unit,
     onOpenShowMode: () -> Unit,
     onOpenGameMode: () -> Unit
@@ -135,7 +139,14 @@ private fun ModeSelectScreen(
                     contentColor = Color(0xFF01211C)
                 )
             ) {
-                Text("Играть", fontWeight = FontWeight.Bold)
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("Играть", fontWeight = FontWeight.Bold)
+                    Text(
+                        "Рекорд: $gameBestRounds",
+                        style = MaterialTheme.typography.bodySmall,
+                        textAlign = TextAlign.Center
+                    )
+                }
             }
             Button(
                 onClick = onOpenTraining,
@@ -273,6 +284,7 @@ private fun GameModeScreen(vm: TrainingViewModel, onBack: () -> Unit) {
     val total = state.gameItems.size
     val completedCount = state.gameCompleted.size
     val isFinished = total > 0 && completedCount == total
+    val isGameOver = state.isGameOver
     val gameErrorMessage = state.gameErrorMessage
     val leftListState = rememberLazyListState()
     val rightListState = rememberLazyListState()
@@ -288,14 +300,21 @@ private fun GameModeScreen(vm: TrainingViewModel, onBack: () -> Unit) {
         ) {
             Text("Игровой режим", style = MaterialTheme.typography.headlineMedium)
             Text(
-                if (isFinished) {
+                "Жизни: ${"❤".repeat(state.gameLives)}",
+                style = MaterialTheme.typography.bodyMedium
+            )
+            Text("Рекорд: ${state.gameBestRounds} раунд(ов)", style = MaterialTheme.typography.bodyMedium)
+            Text(
+                if (isGameOver) {
+                    "Поражение. Пройдено раундов: ${state.gameRoundsCompleted}"
+                } else if (isFinished) {
                     "Готово: $total из $total"
                 } else {
                     "Угадано: $completedCount из $total"
                 },
                 style = MaterialTheme.typography.bodyMedium
             )
-            if (!isFinished) {
+            if (!isFinished && !isGameOver) {
                 Text(
                     "Слушайте слева в любом порядке и выбирайте справа для последней нажатой кнопки",
                     style = MaterialTheme.typography.bodyMedium
@@ -327,7 +346,7 @@ private fun GameModeScreen(vm: TrainingViewModel, onBack: () -> Unit) {
                             ) {
                                 Button(
                                     onClick = { vm.playGamePrompt(index) },
-                                    enabled = !state.isPlaying,
+                                    enabled = !state.isPlaying && !isGameOver,
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .padding(vertical = 3.dp),
@@ -364,7 +383,10 @@ private fun GameModeScreen(vm: TrainingViewModel, onBack: () -> Unit) {
                             ) {
                                 Button(
                                     onClick = { vm.selectGameAnswer(option) },
-                                    enabled = state.gameSelectedLeft != null && !state.isPlaying && !isFinished,
+                                    enabled = state.gameSelectedLeft != null &&
+                                        !state.isPlaying &&
+                                        !isFinished &&
+                                        !isGameOver,
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .padding(vertical = 3.dp),
@@ -384,13 +406,22 @@ private fun GameModeScreen(vm: TrainingViewModel, onBack: () -> Unit) {
                     style = MaterialTheme.typography.bodyMedium
                 )
             }
-            if (isFinished) {
+            if (isFinished && !isGameOver) {
+                Button(
+                    onClick = { vm.startNextGameRound() },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = MaterialTheme.shapes.large
+                ) {
+                    Text("Следующий раунд")
+                }
+            }
+            if (isGameOver) {
                 Button(
                     onClick = { vm.startGameMode() },
                     modifier = Modifier.fillMaxWidth(),
                     shape = MaterialTheme.shapes.large
                 ) {
-                    Text("Следующий раунд")
+                    Text("Новая игра")
                 }
             }
             Button(

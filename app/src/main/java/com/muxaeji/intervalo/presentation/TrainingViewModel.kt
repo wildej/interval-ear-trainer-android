@@ -1,6 +1,7 @@
 package com.muxaeji.intervalo.presentation
 
 import android.app.Application
+import android.content.Context
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.muxaeji.intervalo.data.audio.IntervalAudioPlayer
@@ -32,8 +33,17 @@ data class TrainingUiState(
     val gameOptions: List<Interval> = emptyList(),
     val gameSelectedLeft: Interval? = null,
     val gameCompleted: Set<Interval> = emptySet(),
-    val gameErrorMessage: String? = null
+    val gameErrorMessage: String? = null,
+    val gameLives: Int = GAME_INITIAL_LIVES,
+    val gameRoundsCompleted: Int = 0,
+    val gameBestRounds: Int = 0,
+    val isGameOver: Boolean = false
 )
+
+private const val GAME_INITIAL_LIVES = 5
+private const val GAME_ROUND_SIZE = 6
+private const val GAME_PREFS_NAME = "game_mode_prefs"
+private const val KEY_BEST_ROUNDS = "best_rounds"
 
 class TrainingViewModel(
     application: Application
@@ -44,8 +54,10 @@ class TrainingViewModel(
     private val audioPlayer: IntervalAudioPlayer =
         IntervalAudioPlayerProvider.create(application)
     private val random: Random = Random.Default
+    private val prefs = application.getSharedPreferences(GAME_PREFS_NAME, Context.MODE_PRIVATE)
+    private val bestRoundsStored: Int = prefs.getInt(KEY_BEST_ROUNDS, 0)
 
-    private val _uiState = MutableStateFlow(TrainingUiState())
+    private val _uiState = MutableStateFlow(TrainingUiState(gameBestRounds = bestRoundsStored))
     val uiState: StateFlow<TrainingUiState> = _uiState.asStateFlow()
 
     fun toggleInterval(interval: Interval) {
@@ -140,21 +152,40 @@ class TrainingViewModel(
     }
 
     fun startGameMode() {
-        val items = Interval.entries.shuffled(random).take(6)
+        val items = Interval.entries.shuffled(random).take(GAME_ROUND_SIZE)
         _uiState.update {
             it.copy(
                 gameItems = items,
                 gameOptions = items.shuffled(random),
                 gameSelectedLeft = null,
                 gameCompleted = emptySet(),
-                gameErrorMessage = null
+                gameErrorMessage = null,
+                gameLives = GAME_INITIAL_LIVES,
+                gameRoundsCompleted = 0,
+                isGameOver = false
+            )
+        }
+    }
+
+    fun startNextGameRound() {
+        val state = _uiState.value
+        if (state.isGameOver || state.gameLives <= 0 || state.gameCompleted.size != state.gameItems.size) return
+        val items = Interval.entries.shuffled(random).take(GAME_ROUND_SIZE)
+        _uiState.update {
+            it.copy(
+                gameItems = items,
+                gameOptions = items.shuffled(random),
+                gameSelectedLeft = null,
+                gameCompleted = emptySet(),
+                gameErrorMessage = null,
+                gameRoundsCompleted = it.gameRoundsCompleted + 1
             )
         }
     }
 
     fun playGamePrompt(index: Int) {
         val state = _uiState.value
-        if (state.isPlaying || index !in state.gameItems.indices) return
+        if (state.isPlaying || state.isGameOver || index !in state.gameItems.indices) return
         val interval = state.gameItems[index]
         if (state.gameCompleted.contains(interval)) return
         val root = Note(60)
@@ -170,6 +201,7 @@ class TrainingViewModel(
 
     fun selectGameAnswer(selected: Interval) {
         val state = _uiState.value
+        if (state.isGameOver) return
         if (state.gameCompleted.contains(selected)) return
         val expected = state.gameSelectedLeft ?: return
         if (selected == expected) {
@@ -182,9 +214,22 @@ class TrainingViewModel(
                 )
             }
         } else {
+            val nextLives = (state.gameLives - 1).coerceAtLeast(0)
+            val isGameOver = nextLives == 0
+            val newBest = if (isGameOver) maxOf(state.gameBestRounds, state.gameRoundsCompleted) else state.gameBestRounds
+            if (isGameOver && newBest > state.gameBestRounds) {
+                prefs.edit().putInt(KEY_BEST_ROUNDS, newBest).apply()
+            }
             _uiState.update {
                 it.copy(
-                    gameErrorMessage = "Неверно, попробуйте ещё раз"
+                    gameLives = nextLives,
+                    isGameOver = isGameOver,
+                    gameBestRounds = newBest,
+                    gameErrorMessage = if (isGameOver) {
+                        "Игра окончена"
+                    } else {
+                        "Неверно, попробуйте ещё раз"
+                    }
                 )
             }
         }
