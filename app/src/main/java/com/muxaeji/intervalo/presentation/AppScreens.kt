@@ -4,12 +4,16 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.animateContentSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.animateItemPlacement
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Button
@@ -18,6 +22,10 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -258,10 +266,12 @@ private fun ShowModeScreen(vm: TrainingViewModel, onBack: () -> Unit) {
 @Composable
 private fun GameModeScreen(vm: TrainingViewModel, onBack: () -> Unit) {
     val state by vm.uiState.collectAsState()
-    val currentIndex = state.gameCurrentIndex
     val total = state.gameItems.size
-    val isFinished = total > 0 && currentIndex >= total
+    val completedCount = state.gameCompleted.size
+    val isFinished = total > 0 && completedCount == total
     val gameErrorMessage = state.gameErrorMessage
+    val leftListState = rememberLazyListState()
+    val rightListState = rememberLazyListState()
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
@@ -277,13 +287,13 @@ private fun GameModeScreen(vm: TrainingViewModel, onBack: () -> Unit) {
                 if (isFinished) {
                     "Готово: $total из $total"
                 } else {
-                    "Шаг ${currentIndex + 1} из $total"
+                    "Угадано: $completedCount из $total"
                 },
                 style = MaterialTheme.typography.bodyMedium
             )
             if (!isFinished) {
                 Text(
-                    "Сначала нажмите кнопку слева, затем выберите интервал справа",
+                    "Слушайте слева в любом порядке и выбирайте справа для последней нажатой кнопки",
                     style = MaterialTheme.typography.bodyMedium
                 )
             }
@@ -296,27 +306,37 @@ private fun GameModeScreen(vm: TrainingViewModel, onBack: () -> Unit) {
                     shape = MaterialTheme.shapes.large,
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                 ) {
-                    LazyColumn(modifier = Modifier.padding(12.dp)) {
-                        items(state.gameItems) { interval ->
-                            val index = state.gameItems.indexOf(interval)
+                    LazyColumn(
+                        state = leftListState,
+                        modifier = Modifier.padding(12.dp)
+                    ) {
+                        itemsIndexed(
+                            items = state.gameItems,
+                            key = { _, interval -> interval.name }
+                        ) { index, interval ->
+                            val isSelected = state.gameSelectedLeft == interval
                             val isCompleted = state.gameCompleted.contains(interval)
-                            val isCurrent = index == state.gameCurrentIndex && !isFinished
-                            Button(
-                                onClick = { vm.playGamePrompt(index) },
-                                enabled = isCurrent && !state.isPlaying,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 3.dp),
-                                shape = MaterialTheme.shapes.medium,
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = if (isCompleted) {
-                                        MaterialTheme.colorScheme.tertiary
-                                    } else {
-                                        MaterialTheme.colorScheme.primary
-                                    }
-                                )
+                            AnimatedVisibility(
+                                visible = !isCompleted,
+                                exit = fadeOut(animationSpec = tween(durationMillis = 300)) +
+                                    shrinkVertically(animationSpec = tween(durationMillis = 300))
                             ) {
-                                Text(if (isCompleted) "✓ ${interval.shortName}" else "🔊 Интервал ${index + 1}")
+                                Button(
+                                    onClick = { vm.playGamePrompt(index) },
+                                    enabled = !state.isPlaying,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 3.dp)
+                                        .animateItemPlacement(animationSpec = tween(durationMillis = 300))
+                                        .animateContentSize(animationSpec = tween(durationMillis = 300)),
+                                    shape = MaterialTheme.shapes.medium,
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = if (isSelected) MaterialTheme.colorScheme.tertiary
+                                        else MaterialTheme.colorScheme.primary
+                                    )
+                                ) {
+                                    Text("🔊 Интервал ${index + 1}")
+                                }
                             }
                         }
                     }
@@ -326,17 +346,32 @@ private fun GameModeScreen(vm: TrainingViewModel, onBack: () -> Unit) {
                     shape = MaterialTheme.shapes.large,
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                 ) {
-                    LazyColumn(modifier = Modifier.padding(12.dp)) {
-                        items(state.gameOptions) { option ->
-                            Button(
-                                onClick = { vm.selectGameAnswer(option) },
-                                enabled = state.gameAwaitingAnswer && !state.isPlaying && !isFinished,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 3.dp),
-                                shape = MaterialTheme.shapes.medium
+                    LazyColumn(
+                        state = rightListState,
+                        modifier = Modifier.padding(12.dp)
+                    ) {
+                        items(
+                            items = state.gameOptions,
+                            key = { option -> option.name }
+                        ) { option ->
+                            val isCompleted = state.gameCompleted.contains(option)
+                            AnimatedVisibility(
+                                visible = !isCompleted,
+                                exit = fadeOut(animationSpec = tween(durationMillis = 300)) +
+                                    shrinkVertically(animationSpec = tween(durationMillis = 300))
                             ) {
-                                Text("${option.shortName} - ${option.displayName}")
+                                Button(
+                                    onClick = { vm.selectGameAnswer(option) },
+                                    enabled = state.gameSelectedLeft != null && !state.isPlaying && !isFinished,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 3.dp)
+                                        .animateItemPlacement(animationSpec = tween(durationMillis = 300))
+                                        .animateContentSize(animationSpec = tween(durationMillis = 300)),
+                                    shape = MaterialTheme.shapes.medium
+                                ) {
+                                    Text("${option.shortName} - ${option.displayName}")
+                                }
                             }
                         }
                     }
@@ -349,23 +384,13 @@ private fun GameModeScreen(vm: TrainingViewModel, onBack: () -> Unit) {
                     style = MaterialTheme.typography.bodyMedium
                 )
             }
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            if (isFinished) {
                 Button(
-                    onClick = { vm.reshuffleGameOptions() },
-                    enabled = !isFinished,
-                    modifier = Modifier.weight(1f),
+                    onClick = { vm.startGameMode() },
+                    modifier = Modifier.fillMaxWidth(),
                     shape = MaterialTheme.shapes.large
                 ) {
-                    Text("Сменить справа")
-                }
-                Button(
-                    onClick = {
-                        vm.startGameMode()
-                    },
-                    modifier = Modifier.weight(1f),
-                    shape = MaterialTheme.shapes.large
-                ) {
-                    Text("Новая игра")
+                    Text("Следующий раунд")
                 }
             }
             Button(

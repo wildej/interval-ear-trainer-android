@@ -30,8 +30,7 @@ data class TrainingUiState(
     val stats: SessionStats = SessionStats(),
     val gameItems: List<Interval> = emptyList(),
     val gameOptions: List<Interval> = emptyList(),
-    val gameCurrentIndex: Int = 0,
-    val gameAwaitingAnswer: Boolean = false,
+    val gameSelectedLeft: Interval? = null,
     val gameCompleted: Set<Interval> = emptySet(),
     val gameErrorMessage: String? = null
 )
@@ -146,8 +145,7 @@ class TrainingViewModel(
             it.copy(
                 gameItems = items,
                 gameOptions = items.shuffled(random),
-                gameCurrentIndex = 0,
-                gameAwaitingAnswer = false,
+                gameSelectedLeft = null,
                 gameCompleted = emptySet(),
                 gameErrorMessage = null
             )
@@ -156,13 +154,13 @@ class TrainingViewModel(
 
     fun playGamePrompt(index: Int) {
         val state = _uiState.value
-        val currentIndex = state.gameCurrentIndex
-        if (state.isPlaying || index != currentIndex || currentIndex >= state.gameItems.size) return
-        val interval = state.gameItems[currentIndex]
+        if (state.isPlaying || index !in state.gameItems.indices) return
+        val interval = state.gameItems[index]
+        if (state.gameCompleted.contains(interval)) return
         val root = Note(60)
         val top = Note(root.midi + interval.semitones)
         viewModelScope.launch {
-            _uiState.update { it.copy(isPlaying = true, gameAwaitingAnswer = true, gameErrorMessage = null) }
+            _uiState.update { it.copy(isPlaying = true, gameSelectedLeft = interval, gameErrorMessage = null) }
             runCatching {
                 audioPlayer.playInterval(root, top)
             }
@@ -172,30 +170,23 @@ class TrainingViewModel(
 
     fun selectGameAnswer(selected: Interval) {
         val state = _uiState.value
-        val currentIndex = state.gameCurrentIndex
-        if (!state.gameAwaitingAnswer || currentIndex >= state.gameItems.size) return
-        val expected = state.gameItems[currentIndex]
+        if (state.gameCompleted.contains(selected)) return
+        val expected = state.gameSelectedLeft ?: return
         if (selected == expected) {
             val completed = state.gameCompleted + expected
             _uiState.update {
                 it.copy(
                     gameCompleted = completed,
-                    gameCurrentIndex = currentIndex + 1,
-                    gameAwaitingAnswer = false,
+                    gameSelectedLeft = null,
                     gameErrorMessage = null
                 )
             }
         } else {
             _uiState.update {
                 it.copy(
-                    gameOptions = it.gameOptions.shuffled(random),
                     gameErrorMessage = "Неверно, попробуйте ещё раз"
                 )
             }
         }
-    }
-
-    fun reshuffleGameOptions() {
-        _uiState.update { it.copy(gameOptions = it.gameOptions.shuffled(random), gameErrorMessage = null) }
     }
 }
