@@ -203,13 +203,14 @@ private fun ModeSelectScreen(
             ) {
                 Text("Тренироваться")
             }
-            Spacer(modifier = Modifier.weight(1f))
-            TextButton(
+            Button(
                 onClick = onOpenShowMode,
                 modifier = Modifier.fillMaxWidth(),
+                shape = MaterialTheme.shapes.large
             ) {
-                Text("прослушать")
+                Text("Прослушать интервалы")
             }
+            Spacer(modifier = Modifier.weight(1f))
             if (hasCrashReports) {
                 TextButton(
                     onClick = shareLatestCrashReport,
