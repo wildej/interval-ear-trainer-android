@@ -261,6 +261,7 @@ private fun GameModeScreen(vm: TrainingViewModel, onBack: () -> Unit) {
     val currentIndex = state.gameCurrentIndex
     val total = state.gameItems.size
     val isFinished = total > 0 && currentIndex >= total
+    val gameErrorMessage = state.gameErrorMessage
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
@@ -341,9 +342,9 @@ private fun GameModeScreen(vm: TrainingViewModel, onBack: () -> Unit) {
                     }
                 }
             }
-            if (state.gameErrorMessage != null) {
+            if (gameErrorMessage != null) {
                 Text(
-                    state.gameErrorMessage,
+                    gameErrorMessage,
                     color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.bodyMedium
                 )
