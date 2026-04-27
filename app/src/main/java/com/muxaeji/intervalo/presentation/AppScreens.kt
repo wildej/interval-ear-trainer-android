@@ -62,6 +62,7 @@ private const val ROUTE_MODE_SELECT = "mode_select"
 private const val ROUTE_SHOW = "show"
 private const val ROUTE_GAME = "game"
 private const val ROUTE_GAME_HELP = "game_help"
+private const val ROUTE_PRIVACY = "privacy"
 
 @Composable
 fun IntervalTrainerApp() {
@@ -82,7 +83,8 @@ private fun AppNavHost(navController: NavHostController, vm: TrainingViewModel) 
                 onOpenGameMode = {
                     vm.startGameMode()
                     navController.navigate(ROUTE_GAME)
-                }
+                },
+                onOpenPrivacyPolicy = { navController.navigate(ROUTE_PRIVACY) }
             )
         }
         composable(ROUTE_SETUP) {
@@ -128,6 +130,9 @@ private fun AppNavHost(navController: NavHostController, vm: TrainingViewModel) 
         composable(ROUTE_GAME_HELP) {
             GameHelpScreen(onBack = { navController.popBackStack() })
         }
+        composable(ROUTE_PRIVACY) {
+            PrivacyPolicyScreen(onBack = { navController.popBackStack() })
+        }
     }
 }
 
@@ -136,7 +141,8 @@ private fun ModeSelectScreen(
     gameBestRounds: Int,
     onOpenTraining: () -> Unit,
     onOpenShowMode: () -> Unit,
-    onOpenGameMode: () -> Unit
+    onOpenGameMode: () -> Unit,
+    onOpenPrivacyPolicy: () -> Unit
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
     var hasCrashReports by remember { mutableStateOf(false) }
@@ -223,6 +229,12 @@ private fun ModeSelectScreen(
                 ) {
                     Text("Отправить crash-отчет")
                 }
+            }
+            TextButton(
+                onClick = onOpenPrivacyPolicy,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text("Политика конфиденциальности")
             }
         }
     }
@@ -522,6 +534,45 @@ private fun GameHelpScreen(onBack: () -> Unit) {
                     Text("5. Если ошиблись, теряете одну жизнь и пробуете снова.")
                     Text("6. Когда жизни кончаются, игра завершается.")
                     Text("7. Когда все пары угаданы, переходите в следующий раунд.")
+                }
+            }
+            Button(
+                onClick = onBack,
+                modifier = Modifier.fillMaxWidth(),
+                shape = MaterialTheme.shapes.large
+            ) {
+                Text("Назад")
+            }
+        }
+    }
+}
+
+@Composable
+private fun PrivacyPolicyScreen(onBack: () -> Unit) {
+    Scaffold(
+        containerColor = MaterialTheme.colorScheme.background
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .padding(padding)
+                .padding(20.dp)
+                .fillMaxSize(),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Text("Политика конфиденциальности", style = MaterialTheme.typography.headlineMedium)
+            Card(
+                shape = MaterialTheme.shapes.large,
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            ) {
+                Column(
+                    modifier = Modifier.padding(14.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text("Intervalo хранит только минимальные локальные данные:")
+                    Text("- рекорд игрового режима (число пройденных раундов);")
+                    Text("- crash-отчеты во внутреннем хранилище приложения.")
+                    Text("Для использования приложения не требуются аккаунт, аналитика или персональный профиль.")
+                    Text("При необходимости crash-отчет можно отправить со стартового экрана.")
                 }
             }
             Button(
