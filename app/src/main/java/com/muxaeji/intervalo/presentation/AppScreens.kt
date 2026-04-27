@@ -38,6 +38,7 @@ private const val ROUTE_TRAINING = "training"
 private const val ROUTE_SUMMARY = "summary"
 private const val ROUTE_MODE_SELECT = "mode_select"
 private const val ROUTE_SHOW = "show"
+private const val ROUTE_GAME = "game"
 
 @Composable
 fun IntervalTrainerApp() {
@@ -52,7 +53,11 @@ private fun AppNavHost(navController: NavHostController, vm: TrainingViewModel) 
         composable(ROUTE_MODE_SELECT) {
             ModeSelectScreen(
                 onOpenTraining = { navController.navigate(ROUTE_SETUP) },
-                onOpenShowMode = { navController.navigate(ROUTE_SHOW) }
+                onOpenShowMode = { navController.navigate(ROUTE_SHOW) },
+                onOpenGameMode = {
+                    vm.startGameMode()
+                    navController.navigate(ROUTE_GAME)
+                }
             )
         }
         composable(ROUTE_SETUP) {
@@ -85,11 +90,21 @@ private fun AppNavHost(navController: NavHostController, vm: TrainingViewModel) 
                 onBack = { navController.popBackStack() }
             )
         }
+        composable(ROUTE_GAME) {
+            GameModeScreen(
+                vm = vm,
+                onBack = { navController.popBackStack() }
+            )
+        }
     }
 }
 
 @Composable
-private fun ModeSelectScreen(onOpenTraining: () -> Unit, onOpenShowMode: () -> Unit) {
+private fun ModeSelectScreen(
+    onOpenTraining: () -> Unit,
+    onOpenShowMode: () -> Unit,
+    onOpenGameMode: () -> Unit
+) {
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
@@ -116,6 +131,13 @@ private fun ModeSelectScreen(onOpenTraining: () -> Unit, onOpenShowMode: () -> U
                 shape = MaterialTheme.shapes.large
             ) {
                 Text("Режим показа")
+            }
+            Button(
+                onClick = onOpenGameMode,
+                modifier = Modifier.fillMaxWidth(),
+                shape = MaterialTheme.shapes.large
+            ) {
+                Text("Игровой режим")
             }
         }
     }
@@ -220,6 +242,129 @@ private fun ShowModeScreen(vm: TrainingViewModel, onBack: () -> Unit) {
                             Text("${interval.shortName} - ${interval.displayName}")
                         }
                     }
+                }
+            }
+            Button(
+                onClick = onBack,
+                modifier = Modifier.fillMaxWidth(),
+                shape = MaterialTheme.shapes.large
+            ) {
+                Text("Назад")
+            }
+        }
+    }
+}
+
+@Composable
+private fun GameModeScreen(vm: TrainingViewModel, onBack: () -> Unit) {
+    val state by vm.uiState.collectAsState()
+    val currentIndex = state.gameCurrentIndex
+    val total = state.gameItems.size
+    val isFinished = total > 0 && currentIndex >= total
+    Scaffold(
+        containerColor = MaterialTheme.colorScheme.background
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .padding(padding)
+                .padding(20.dp)
+                .fillMaxSize(),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Text("Игровой режим", style = MaterialTheme.typography.headlineMedium)
+            Text(
+                if (isFinished) {
+                    "Готово: $total из $total"
+                } else {
+                    "Шаг ${currentIndex + 1} из $total"
+                },
+                style = MaterialTheme.typography.bodyMedium
+            )
+            if (!isFinished) {
+                Text(
+                    "Сначала нажмите кнопку слева, затем выберите интервал справа",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+            Row(
+                modifier = Modifier.weight(1f),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Card(
+                    modifier = Modifier.weight(1f),
+                    shape = MaterialTheme.shapes.large,
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                ) {
+                    LazyColumn(modifier = Modifier.padding(12.dp)) {
+                        items(state.gameItems) { interval ->
+                            val index = state.gameItems.indexOf(interval)
+                            val isCompleted = state.gameCompleted.contains(interval)
+                            val isCurrent = index == state.gameCurrentIndex && !isFinished
+                            Button(
+                                onClick = { vm.playGamePrompt(index) },
+                                enabled = isCurrent && !state.isPlaying,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 3.dp),
+                                shape = MaterialTheme.shapes.medium,
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = if (isCompleted) {
+                                        MaterialTheme.colorScheme.tertiary
+                                    } else {
+                                        MaterialTheme.colorScheme.primary
+                                    }
+                                )
+                            ) {
+                                Text(if (isCompleted) "✓ ${interval.shortName}" else "🔊 Интервал ${index + 1}")
+                            }
+                        }
+                    }
+                }
+                Card(
+                    modifier = Modifier.weight(1f),
+                    shape = MaterialTheme.shapes.large,
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                ) {
+                    LazyColumn(modifier = Modifier.padding(12.dp)) {
+                        items(state.gameOptions) { option ->
+                            Button(
+                                onClick = { vm.selectGameAnswer(option) },
+                                enabled = state.gameAwaitingAnswer && !state.isPlaying && !isFinished,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 3.dp),
+                                shape = MaterialTheme.shapes.medium
+                            ) {
+                                Text("${option.shortName} - ${option.displayName}")
+                            }
+                        }
+                    }
+                }
+            }
+            if (state.gameErrorMessage != null) {
+                Text(
+                    state.gameErrorMessage,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Button(
+                    onClick = { vm.reshuffleGameOptions() },
+                    enabled = !isFinished,
+                    modifier = Modifier.weight(1f),
+                    shape = MaterialTheme.shapes.large
+                ) {
+                    Text("Сменить справа")
+                }
+                Button(
+                    onClick = {
+                        vm.startGameMode()
+                    },
+                    modifier = Modifier.weight(1f),
+                    shape = MaterialTheme.shapes.large
+                ) {
+                    Text("Новая игра")
                 }
             }
             Button(

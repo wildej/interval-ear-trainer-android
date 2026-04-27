@@ -11,6 +11,7 @@ import com.muxaeji.intervalo.domain.Interval
 import com.muxaeji.intervalo.domain.Note
 import com.muxaeji.intervalo.domain.Question
 import com.muxaeji.intervalo.domain.SessionStats
+import kotlin.random.Random
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -26,7 +27,13 @@ data class TrainingUiState(
     val isAnswerChecked: Boolean = false,
     val isAnswerCorrect: Boolean = false,
     val isPlaying: Boolean = false,
-    val stats: SessionStats = SessionStats()
+    val stats: SessionStats = SessionStats(),
+    val gameItems: List<Interval> = emptyList(),
+    val gameOptions: List<Interval> = emptyList(),
+    val gameCurrentIndex: Int = 0,
+    val gameAwaitingAnswer: Boolean = false,
+    val gameCompleted: Set<Interval> = emptySet(),
+    val gameErrorMessage: String? = null
 )
 
 class TrainingViewModel(
@@ -37,6 +44,7 @@ class TrainingViewModel(
     private val checkAnswerUseCase = CheckAnswerUseCase()
     private val audioPlayer: IntervalAudioPlayer =
         IntervalAudioPlayerProvider.create(application)
+    private val random: Random = Random.Default
 
     private val _uiState = MutableStateFlow(TrainingUiState())
     val uiState: StateFlow<TrainingUiState> = _uiState.asStateFlow()
@@ -130,5 +138,64 @@ class TrainingViewModel(
             }
             _uiState.update { it.copy(isPlaying = false) }
         }
+    }
+
+    fun startGameMode() {
+        val items = Interval.entries.shuffled(random).take(6)
+        _uiState.update {
+            it.copy(
+                gameItems = items,
+                gameOptions = items.shuffled(random),
+                gameCurrentIndex = 0,
+                gameAwaitingAnswer = false,
+                gameCompleted = emptySet(),
+                gameErrorMessage = null
+            )
+        }
+    }
+
+    fun playGamePrompt(index: Int) {
+        val state = _uiState.value
+        val currentIndex = state.gameCurrentIndex
+        if (state.isPlaying || index != currentIndex || currentIndex >= state.gameItems.size) return
+        val interval = state.gameItems[currentIndex]
+        val root = Note(60)
+        val top = Note(root.midi + interval.semitones)
+        viewModelScope.launch {
+            _uiState.update { it.copy(isPlaying = true, gameAwaitingAnswer = true, gameErrorMessage = null) }
+            runCatching {
+                audioPlayer.playInterval(root, top)
+            }
+            _uiState.update { it.copy(isPlaying = false) }
+        }
+    }
+
+    fun selectGameAnswer(selected: Interval) {
+        val state = _uiState.value
+        val currentIndex = state.gameCurrentIndex
+        if (!state.gameAwaitingAnswer || currentIndex >= state.gameItems.size) return
+        val expected = state.gameItems[currentIndex]
+        if (selected == expected) {
+            val completed = state.gameCompleted + expected
+            _uiState.update {
+                it.copy(
+                    gameCompleted = completed,
+                    gameCurrentIndex = currentIndex + 1,
+                    gameAwaitingAnswer = false,
+                    gameErrorMessage = null
+                )
+            }
+        } else {
+            _uiState.update {
+                it.copy(
+                    gameOptions = it.gameOptions.shuffled(random),
+                    gameErrorMessage = "Неверно, попробуйте ещё раз"
+                )
+            }
+        }
+    }
+
+    fun reshuffleGameOptions() {
+        _uiState.update { it.copy(gameOptions = it.gameOptions.shuffled(random), gameErrorMessage = null) }
     }
 }
