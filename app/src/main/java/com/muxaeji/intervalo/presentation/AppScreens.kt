@@ -1,5 +1,7 @@
 package com.muxaeji.intervalo.presentation
 
+import android.content.Intent
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -27,8 +29,12 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -40,11 +46,13 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.core.content.FileProvider
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.muxaeji.intervalo.R
+import com.muxaeji.intervalo.core.CrashReportStore
 import com.muxaeji.intervalo.domain.Interval
 
 private const val ROUTE_SETUP = "setup"
@@ -122,6 +130,32 @@ private fun ModeSelectScreen(
     onOpenShowMode: () -> Unit,
     onOpenGameMode: () -> Unit
 ) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    var hasCrashReports by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        hasCrashReports = CrashReportStore.hasReports(context)
+    }
+
+    val shareLatestCrashReport: () -> Unit = share@{
+        val file = CrashReportStore.latestReport(context)
+        if (file == null) {
+            Toast.makeText(context, "Нет crash-отчетов", Toast.LENGTH_SHORT).show()
+            return@share
+        }
+        val uri = FileProvider.getUriForFile(
+            context,
+            "${context.packageName}.fileprovider",
+            file
+        )
+        val intent = Intent(Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(Intent.EXTRA_STREAM, uri)
+            putExtra(Intent.EXTRA_SUBJECT, "Intervalo crash report")
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+        context.startActivity(Intent.createChooser(intent, "Отправить crash-отчет"))
+    }
+
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
@@ -172,6 +206,14 @@ private fun ModeSelectScreen(
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Text("прослушать")
+            }
+            if (hasCrashReports) {
+                TextButton(
+                    onClick = shareLatestCrashReport,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text("Отправить crash-отчет")
+                }
             }
         }
     }
