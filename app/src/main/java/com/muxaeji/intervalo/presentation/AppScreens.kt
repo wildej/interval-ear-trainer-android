@@ -172,12 +172,26 @@ private fun TrainingScreen(vm: TrainingViewModel, onOpenSummary: () -> Unit) {
             ) {
                 LazyColumn(modifier = Modifier.padding(12.dp)) {
                     items(question?.options.orEmpty()) { option ->
+                        val isSelected = state.selectedAnswer == option
                         Button(
                             onClick = { vm.selectAnswer(option) },
+                            enabled = !state.isAnswerChecked,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(vertical = 3.dp),
-                            shape = MaterialTheme.shapes.medium
+                            shape = MaterialTheme.shapes.medium,
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = if (isSelected) {
+                                    MaterialTheme.colorScheme.tertiary
+                                } else {
+                                    MaterialTheme.colorScheme.primary
+                                },
+                                disabledContainerColor = if (isSelected) {
+                                    MaterialTheme.colorScheme.tertiary
+                                } else {
+                                    MaterialTheme.colorScheme.surface
+                                }
+                            )
                         ) {
                             Text("${option.shortName} - ${option.displayName}")
                         }
