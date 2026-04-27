@@ -100,6 +100,9 @@ private fun AppNavHost(navController: NavHostController, vm: TrainingViewModel) 
             SessionSummaryScreen(
                 vm = vm,
                 onRestart = {
+                    navController.popBackStack(ROUTE_SETUP, inclusive = false)
+                },
+                onBackToMenu = {
                     navController.popBackStack(ROUTE_MODE_SELECT, inclusive = false)
                 },
                 onRetake = {
@@ -595,7 +598,12 @@ private fun TrainingScreen(vm: TrainingViewModel, onOpenSummary: () -> Unit) {
 }
 
 @Composable
-private fun SessionSummaryScreen(vm: TrainingViewModel, onRestart: () -> Unit, onRetake: () -> Unit) {
+private fun SessionSummaryScreen(
+    vm: TrainingViewModel,
+    onRestart: () -> Unit,
+    onBackToMenu: () -> Unit,
+    onRetake: () -> Unit
+) {
     val state by vm.uiState.collectAsState()
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background
@@ -623,6 +631,13 @@ private fun SessionSummaryScreen(vm: TrainingViewModel, onRestart: () -> Unit, o
             }
             Button(onClick = onRestart, modifier = Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large) {
                 Text("Изменить набор")
+            }
+            Button(
+                onClick = onBackToMenu,
+                modifier = Modifier.fillMaxWidth(),
+                shape = MaterialTheme.shapes.large
+            ) {
+                Text("В стартовое меню")
             }
         }
     }
