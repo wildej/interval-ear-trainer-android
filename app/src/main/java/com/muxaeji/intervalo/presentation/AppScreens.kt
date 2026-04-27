@@ -25,11 +25,14 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Image
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.font.FontWeight
@@ -41,6 +44,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.muxaeji.intervalo.R
 import com.muxaeji.intervalo.domain.Interval
 
 private const val ROUTE_SETUP = "setup"
@@ -128,7 +132,14 @@ private fun ModeSelectScreen(
                 .fillMaxSize(),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Text("Intervalo", style = MaterialTheme.typography.headlineMedium)
+            Image(
+                painter = painterResource(R.drawable.mascot),
+                contentDescription = "Mascot",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(180.dp),
+                contentScale = ContentScale.Fit
+            )
             Spacer(modifier = Modifier.height(8.dp))
             Button(
                 onClick = onOpenGameMode,
